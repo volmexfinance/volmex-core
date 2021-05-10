@@ -1,11 +1,6 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
-import {
-  Signer,
-  Contract,
-  ContractReceipt,
-  Event,
-} from "ethers";
+const { ethers, upgrades } = require("hardhat");
+import { Signer, Contract, ContractReceipt, Event } from "ethers";
 import {
   VolmexIndexFactory,
   VolmexIndexFactory__factory,
@@ -13,8 +8,11 @@ import {
   TestCollateralToken__factory,
   VolmexProtocol,
   VolmexProtocol__factory,
+  VolmexPositionToken__factory,
+  VolmexPositionToken,
 } from "../types";
 import { Result } from "@ethersproject/abi";
+const { expectRevert } = require("@openzeppelin/test-helpers");
 
 export const filterEvents = (
   blockEvents: ContractReceipt,
@@ -31,7 +29,11 @@ export const decodeEvents = <T extends Contract>(
   for (const event of events) {
     const getEventInterface = token.interface.getEvent(event.event || "");
     decodedEvents.push(
-      token.interface.decodeEventLog(getEventInterface, event.data, event.topics)
+      token.interface.decodeEventLog(
+        getEventInterface,
+        event.data,
+        event.topics
+      )
     );
   }
   return decodedEvents;
@@ -41,8 +43,13 @@ describe("Volmex Index Factory", function () {
   let accounts: Signer[];
   let CollateralToken: TestCollateralToken;
   let CollateralTokenFactory: TestCollateralToken__factory;
-  let indexFactory: VolmexIndexFactory__factory;
-  let factory: VolmexIndexFactory;
+  let VolmexPositionTokenFactory: VolmexPositionToken__factory;
+  let volmexProtocolFactory: VolmexProtocol__factory;
+  let VolmexProtocol: VolmexProtocol;
+  let VolmexPositionToken: VolmexPositionToken;
+  let indexFactory: any;
+  let factory: Contract;
+  let positionTokenCreatedEvent: Result[];
 
   this.beforeAll(async function () {
     accounts = await ethers.getSigners();
@@ -50,6 +57,14 @@ describe("Volmex Index Factory", function () {
     CollateralTokenFactory = (await ethers.getContractFactory(
       "TestCollateralToken"
     )) as TestCollateralToken__factory;
+
+    VolmexPositionTokenFactory = (await ethers.getContractFactory(
+      "VolmexPositionToken"
+    )) as VolmexPositionToken__factory;
+
+    volmexProtocolFactory = (await ethers.getContractFactory(
+      "VolmexProtocol"
+    )) as VolmexProtocol__factory;
 
     indexFactory = (await ethers.getContractFactory(
       "VolmexIndexFactory"
@@ -60,80 +75,87 @@ describe("Volmex Index Factory", function () {
     CollateralToken = (await CollateralTokenFactory.deploy()) as TestCollateralToken;
     await CollateralToken.deployed();
 
-    factory = await indexFactory
-      .deploy()
-      .then((f: VolmexIndexFactory) => f.deployed());
-  });
+    VolmexPositionToken = (await VolmexPositionTokenFactory.deploy()) as VolmexPositionToken
 
-  it("should deploy index from a factory", async () => {
-    const deployedIndex = await factory.createIndex(
-      CollateralToken.address,
-      "20000000000000000000",
-      "200",
-      "Ethereum",
-      "ETH"
-    );
+    factory = await upgrades.deployProxy(indexFactory, [
+      VolmexPositionToken.address
+    ]);
+    await factory.deployed();
 
-    const transaction = await deployedIndex.wait();
-
-    const indexCreatedEvent = decodeEvents(
-      factory,
-      filterEvents(transaction, "IndexCreated")
-    );
-
-    //@ts-ignore
-    const address = indexCreatedEvent[0].index;
-
-    expect(address).not.equal(undefined);
-
-    let instance: VolmexProtocol | null;
-
-    if (address !== undefined) {
-      const {
-        interface: contract_interface,
-      } = (await ethers.getContractFactory(
-        "VolmexProtocol"
-      )) as VolmexProtocol__factory;
-      instance = new ethers.Contract(address, contract_interface, accounts[0]);
-      expect(await instance?.active()).to.equal(true);
-    } else {
-      instance = null;
-    }
-    expect(instance).not.equal(null);
-  });
-
-  it("Should deploy position token from factory", async () => {
-    const deployedIndex = await factory.createIndex(
-      CollateralToken.address,
-      "20000000000000000000",
-      "200",
-      "Ethereum",
+    const clonedPositionTokens = await factory.createVolatilityTokens(
+      "Ethereum Volatility Index Token",
       "ETHV"
     );
 
-    const transaction = await deployedIndex.wait();
+    const transaction = await clonedPositionTokens.wait();
 
-    const positionTokenCreatedEvent = decodeEvents(
+    positionTokenCreatedEvent = decodeEvents(
       factory,
-      filterEvents(transaction, "PositionTokenCreated")
+      filterEvents(transaction, "VolatilityTokenCreated")
     );
 
+    VolmexProtocol = await upgrades.deployProxy(volmexProtocolFactory, [
+      CollateralToken.address,
+      positionTokenCreatedEvent[0].volatilityToken,
+      positionTokenCreatedEvent[0].inverseVolatilityToken,
+      "200000000000000000000",
+      "200",
+    ]);
+    await VolmexProtocol.deployed();
+  });
+
+  it("Should deploy position token from factory", async () => {
     const volatilityToken = positionTokenCreatedEvent[0].volatilityToken;
-    const inverseVolatilityToken = positionTokenCreatedEvent[0].inverseVolatilityToken;
+    const inverseVolatilityToken =
+      positionTokenCreatedEvent[0].inverseVolatilityToken;
 
     expect(volatilityToken).not.equal(null);
     expect(inverseVolatilityToken).not.equal(null);
   });
 
-  it("should determine index address", async () => {
-    const determineIndex = await factory.determineIndexAddress(1);
+  it("should deploy index from a factory", async () => {
+    const volmexProtocolRegister = await factory.registerIndex(
+      positionTokenCreatedEvent[0].indexCount,
+      VolmexProtocol.address
+    );
 
-    expect(determineIndex).not.equal(null);
+    const indexRegisteredEvent = decodeEvents(
+      factory,
+      filterEvents(await volmexProtocolRegister.wait(), "IndexRegistered")
+    );
+
+    //@ts-ignore
+    const address = indexRegisteredEvent[0].index;
+
+    expect(address).not.equal(undefined);
+
+    let instance: VolmexProtocol | null;
+    const { interface: contract_interface } = (await ethers.getContractFactory(
+      "VolmexProtocol"
+    )) as VolmexProtocol__factory;
+
+    instance = new ethers.Contract(address, contract_interface, accounts[0]);
+
+    expect(instance).not.equal(null);
+
+    expect(await instance?.active()).to.equal(true);
+
+    await expectRevert(
+      factory.registerIndex(
+        positionTokenCreatedEvent[0].indexCount,
+        VolmexProtocol.address
+      ),
+      "IndexFactory: Volatility tokens are not created yet"
+    );
   });
 
   it("should determine position token address", async () => {
-    const determinePositionToken = await factory.determinePositionTokenAddress(1, "Ethereum", "ETH");
+    const determineVolatilityToken = await factory.determineVolatilityTokenAddress(
+      1,
+      "Ethereum",
+      "ETH"
+    );
 
-    expect(determinePositionToken).not.equal(null);
+    expect(determineVolatilityToken).not.equal(null);
   });
 });

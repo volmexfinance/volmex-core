@@ -24,12 +24,9 @@ contract("VolmexPositionToken", function (accounts) {
   const initialSupply = new BN(100);
 
   beforeEach(async function () {
-    this.token = await VolmexPositionTokenMock.new(
-      name,
-      symbol,
-      initialHolder,
-      initialSupply
-    );
+    this.token = await VolmexPositionTokenMock.new();
+    await this.token.initialize(name, symbol);
+    await this.token.mint(initialHolder, initialSupply);
   });
 
   it("has a name", async function () {

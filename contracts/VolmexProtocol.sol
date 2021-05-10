@@ -21,11 +21,14 @@ contract VolmexProtocol is
     using VolmexSafeERC20 for IERC20Modified;
 
     event ToggleActivated(bool isActive);
-    event UpdatedPositionToken(address indexed positionToken, bool isVolatilityIndexToken);
+    event UpdatedVolatilityToken(
+        address indexed positionToken,
+        bool isVolatilityIndexToken
+    );
     event UpdatedFees(uint256 issuanceFees, uint256 redeemFees);
     event UpdatedMinimumCollateral(uint256 newMinimumCollateralQty);
     event ClaimedFees(uint256 fees);
-    event ToggledPositionTokenPause(bool isPause);
+    event ToggledVolatilityTokenPause(bool isPause);
     event Settled(uint256 settlementPrice);
     event ContractApproved(address indexed account);
     event ContractRevoked(address indexed account);
@@ -53,7 +56,7 @@ contract VolmexProtocol is
     // Has the boolean state of protocol settlement
     bool public isSettled;
 
-    // Position tokens
+    // Volatility tokens
     IERC20Modified public volatilityToken;
     IERC20Modified public inverseVolatilityToken;
 
@@ -88,7 +91,7 @@ contract VolmexProtocol is
     mapping(address => bool) public approved;
 
     /**
-     * @notice Used to check calling address is active
+     * @notice Used to check contract is active
      */
     modifier onlyActive() {
         require(active, "Volmex: Protocol not active");
@@ -118,7 +121,7 @@ contract VolmexProtocol is
     }
 
     /**
-     * @notice Used to check calling address is not settled
+     * @notice Used to check contract is not settled
      */
     modifier onlyNotSettled() {
         require(!isSettled, "Volmex: Protocol settled");
@@ -126,7 +129,7 @@ contract VolmexProtocol is
     }
 
     /**
-     * @notice Used to check calling address is settled
+     * @notice Used to check contract is settled
      */
     modifier onlySettled() {
         require(isSettled, "Volmex: Protocol not settled");
@@ -152,7 +155,7 @@ contract VolmexProtocol is
         IERC20Modified _inverseVolatilityToken,
         uint256 _minimumCollateralQty,
         uint256 _volatilityCapRatio
-    ) public initializer {
+    ) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
@@ -194,18 +197,18 @@ contract VolmexProtocol is
     }
 
     /**
-     * @notice Update the {Position Token}
+     * @notice Update the {Volatility Token}
      * @param _positionToken Address of the new position token
      * @param _isVolatilityIndexToken Type of the position token, { VolatilityIndexToken: true, InverseVolatilityIndexToken: false }
      */
-    function updatePositionToken(address _positionToken, bool _isVolatilityIndexToken)
-        external
-        onlyOwner
-    {
+    function updateVolatilityToken(
+        address _positionToken,
+        bool _isVolatilityIndexToken
+    ) external onlyOwner {
         _isVolatilityIndexToken
             ? volatilityToken = IERC20Modified(_positionToken)
             : inverseVolatilityToken = IERC20Modified(_positionToken);
-        emit UpdatedPositionToken(_positionToken, _isVolatilityIndexToken);
+        emit UpdatedVolatilityToken(_positionToken, _isVolatilityIndexToken);
     }
 
     /**
@@ -232,7 +235,13 @@ contract VolmexProtocol is
 
         _lockForBlock();
 
+        // Mechanism to calculate the collateral qty using the increase in balance
+        // of protocol contract to counter USDT's fee mechanism, which can be enabled in future
+        uint256 initialProtocolBalance = collateral.balanceOf(address(this));
         collateral.safeTransferFrom(msg.sender, address(this), _collateralQty);
+        uint256 finalProtocolBalance = collateral.balanceOf(address(this));
+
+        _collateralQty = finalProtocolBalance - initialProtocolBalance;
 
         uint256 fee;
         if (issuanceFees > 0) {
@@ -285,18 +294,22 @@ contract VolmexProtocol is
      *
      * Safely transfer the collateral to `msg.sender`
      */
-    function redeemSettled(uint256 _volatilityIndexTokenQty, uint256 _inverseVolatilityIndexTokenQty)
-        external
-        onlyActive
-        onlySettled
-    {
+    function redeemSettled(
+        uint256 _volatilityIndexTokenQty,
+        uint256 _inverseVolatilityIndexTokenQty
+    ) external onlyActive defend blockLocked onlySettled {
         _lockForBlock();
 
         uint256 collQtyToBeRedeemed =
             (_volatilityIndexTokenQty * settlementPrice) +
-                (_inverseVolatilityIndexTokenQty * (volatilityCapRatio - settlementPrice));
+                (_inverseVolatilityIndexTokenQty *
+                    (volatilityCapRatio - settlementPrice));
 
-        _redeem(collQtyToBeRedeemed, _volatilityIndexTokenQty, _inverseVolatilityIndexTokenQty);
+        _redeem(
+            collQtyToBeRedeemed,
+            _volatilityIndexTokenQty,
+            _inverseVolatilityIndexTokenQty
+        );
     }
 
     /**
@@ -306,7 +319,11 @@ contract VolmexProtocol is
      *
      * The inverse volatility index token at settlement is worth volatilityCapRatio - volatility index settlement price
      */
-    function settle(uint256 _settlementPrice) external onlyOwner {
+    function settle(uint256 _settlementPrice)
+        external
+        onlyOwner
+        onlyNotSettled
+    {
         require(
             _settlementPrice <= volatilityCapRatio,
             "Volmex: _settlementPrice should be less than equal to volatilityCapRatio"
@@ -323,7 +340,11 @@ contract VolmexProtocol is
         address _token,
         address _toWhom,
         uint256 _howMuch
-    ) external nonReentrant onlyOwner {
+    )
+        external
+        nonReentrant
+        onlyOwner
+    {
         require(
             _token != address(collateral),
             "Volmex: Collateral token not allowed"
@@ -376,7 +397,7 @@ contract VolmexProtocol is
             inverseVolatilityToken.unpause();
         }
 
-        emit ToggledPositionTokenPause(_isPause);
+        emit ToggledVolatilityTokenPause(_isPause);
     }
 
     /**
@@ -410,7 +431,10 @@ contract VolmexProtocol is
         }
 
         volatilityToken.burn(msg.sender, _volatilityIndexTokenQty);
-        inverseVolatilityToken.burn(msg.sender, _inverseVolatilityIndexTokenQty);
+        inverseVolatilityToken.burn(
+            msg.sender,
+            _inverseVolatilityIndexTokenQty
+        );
 
         collateral.safeTransfer(msg.sender, _collateralQtyRedeemed);
 

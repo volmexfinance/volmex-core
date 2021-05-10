@@ -8,7 +8,6 @@ import "@nomiclabs/hardhat-waffle";
 import "hardhat-contract-sizer";
 import "hardhat-typechain";
 import "hardhat-deploy";
-// import * as dotenv from "dotenv";
 import "@nomiclabs/hardhat-etherscan";
 import "hardhat-gas-reporter";
 import "solidity-coverage";

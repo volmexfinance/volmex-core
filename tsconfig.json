@@ -12,6 +12,7 @@
         "hardhat.config.ts",
         "./scripts",
         "./deploy",
-        "./test"
+        "./test",
+        "./helper"
     ]
 }

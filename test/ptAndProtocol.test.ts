@@ -344,17 +344,17 @@ describe("Protocol contract", function () {
     await expectRevert(
       this.protcolInstance
         .connect(this.account2)
-        .updatePositionToken(wallet.address, true),
+        .updateVolatilityToken(wallet.address, true),
       "Ownable: caller is not the owner"
     );
-    const receipt = await this.protcolInstance.updatePositionToken(
+    const receipt = await this.protcolInstance.updateVolatilityToken(
       wallet.address,
       true
     );
     expect(
       await checkEvent(
         receipt,
-        "UpdatedPositionToken",
+        "UpdatedVolatilityToken",
         "positionToken",
         "isLong"
       )

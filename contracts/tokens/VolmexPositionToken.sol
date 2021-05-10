@@ -9,8 +9,14 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20Pausable
 /**
  * This contract is used to deploy the volatility and inverse volatility tokens.
  */
-contract VolmexPositionToken is Initializable, AccessControlUpgradeable, ERC20PausableUpgradeable {
-    bytes32 public constant VOLMEX_PROTOCOL_ROLE = keccak256("VOLMEX_PROTOCOL_ROLE");
+contract VolmexPositionToken is
+    Initializable,
+    AccessControlUpgradeable,
+    ERC20PausableUpgradeable
+{
+    // Position token role, calculated as keccak256("VOLMEX_PROTOCOL_ROLE")
+    bytes32 public constant VOLMEX_PROTOCOL_ROLE =
+        0x33ba6006595f7ad5c59211bde33456cab351f47602fc04f644c8690bc73c4e16;
 
     /**
      * @dev Grants `DEFAULT_ADMIN_ROLE` and `VOLMEX_PROTOCOL_ROLE` to the
@@ -18,7 +24,10 @@ contract VolmexPositionToken is Initializable, AccessControlUpgradeable, ERC20Pa
      *
      * See {ERC20-constructor}.
      */
-    function initialize(string memory name, string memory symbol) public initializer {
+    function initialize(string memory name, string memory symbol)
+        external
+        initializer
+    {
         __ERC20_init_unchained(name, symbol);
         __AccessControl_init_unchained();
 
