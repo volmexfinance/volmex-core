@@ -337,7 +337,7 @@ contract VolmexProtocol is
 
         collateral.safeTransfer(owner(), claimedAccumulatedFees);
 
-        emit ClaimedFees(accumulatedFees);
+        emit ClaimedFees(claimedAccumulatedFees);
     }
 
     /**
