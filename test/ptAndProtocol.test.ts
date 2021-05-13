@@ -417,7 +417,7 @@ describe("Protocol contract", function () {
       this.protcolInstance
         .connect(this.account2)
         .collateralize("200000000000000"),
-      "Volmex: CollateralQty < minimum qty required"
+      "Volmex: CollateralQty > minimum qty required"
     );
   });
 
@@ -859,38 +859,5 @@ describe("Protocol contract", function () {
       .redeemSettled("1000000000000000000", "1000000000000000000");
 
     expect(receipt.confirmations).to.be.above(0);
-  });
-
-  it("protocol functions should not be called in same transaction", async function () {
-    const protocolAttacksMock = await ethers.getContractFactory(
-      "ProtocolAttacksMock"
-    );
-    const protocolAttacksInstance = await protocolAttacksMock.deploy(
-      this.protcolInstance.address,
-      this.DummyERC20Instance.address
-    );
-    await protocolAttacksInstance.deployed();
-
-    this.DummyERC20Instance.transfer(
-      protocolAttacksInstance.address,
-      "500000000000000000000"
-    );
-
-    await this.protcolInstance.approveContractAccess(protocolAttacksInstance.address);
-
-    const receipt = await protocolAttacksInstance.callCollaterize();
-    expect(receipt.confirmations).to.be.above(0);
-
-    expectRevert(
-      protocolAttacksInstance.callCollaterizeAndRedeem(),
-      "Volmex: Operations are locked for current block"
-    );
-
-    await this.protcolInstance.revokeContractAccess(protocolAttacksInstance.address);
-
-    expectRevert(
-      protocolAttacksInstance.callCollaterizeAndRedeem(),
-      "Volmex: Access denied for caller"
-    );
   });
 });
