@@ -115,8 +115,8 @@ describe("Volmex Index Factory", function () {
 
   it("should deploy index from a factory", async () => {
     const volmexProtocolRegister = await factory.registerIndex(
-      positionTokenCreatedEvent[0].indexCount,
-      VolmexProtocol.address
+      VolmexProtocol.address,
+      `${process.env.COLLATERAL_TOKEN_SYMBOL}`
     );
 
     const indexRegisteredEvent = decodeEvents(
@@ -139,14 +139,6 @@ describe("Volmex Index Factory", function () {
     expect(instance).not.equal(null);
 
     expect(await instance?.active()).to.equal(true);
-
-    await expectRevert(
-      factory.registerIndex(
-        positionTokenCreatedEvent[0].indexCount,
-        VolmexProtocol.address
-      ),
-      "IndexFactory: Volatility tokens are not created yet"
-    );
   });
 
   it("should determine position token address", async () => {
