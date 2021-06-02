@@ -53,6 +53,22 @@ export default {
       throwOnTransactionFailures: true,
       loggingEnabled: true,
     },
+    goerli: {
+      url: `https://eth-goerli.alchemyapi.io/v2/${process.env.GOERLI_ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      throwOnTransactionFailures: true,
+      loggingEnabled: true,
+      gas: 5000000,
+      gasPrice: 200000000000,
+      blockGasLimit: 8000000,
+      timeout: 10800000
+    }
+  },
+  namedAccounts: {
+    deployer: 0,
+  },
+  paths: {
+    sources: 'contracts',
   },
   etherscan: {
     // Your API key for Etherscan
