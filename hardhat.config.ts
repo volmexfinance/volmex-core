@@ -2,6 +2,7 @@ require("dotenv").config();
 import "@nomiclabs/hardhat-truffle5";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
+import "@openzeppelin/hardhat-defender";
 
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-waffle";
@@ -26,6 +27,10 @@ task("accounts", "Prints the list of accounts", async (args, hre) => {
 });
 
 export default {
+  defender: {
+    apiKey: process.env.DEFENDER_TEAM_API_KEY,
+    apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY,
+  },
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
@@ -47,8 +52,18 @@ export default {
       gasLimit: 8000000,
       gasPrice: 1,
     },
+    mainnet: {
+      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.MAINNET_ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      throwOnTransactionFailures: true,
+      loggingEnabled: true,
+      gas: 5000000,
+      gasPrice: 20000000000, // 20 gwei, ref: https://etherscan.io/gastracker
+      blockGasLimit: 8000000,
+      timeout: 3600000
+    },
     kovan: {
-      url: `https://eth-kovan.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
+      url: `https://eth-kovan.alchemyapi.io/v2/${process.env.KOVAN_ALCHEMY_API_KEY}`,
       accounts: [`0x${process.env.PRIVATE_KEY}`],
       throwOnTransactionFailures: true,
       loggingEnabled: true,
@@ -62,6 +77,13 @@ export default {
       gasPrice: 200000000000,
       blockGasLimit: 8000000,
       timeout: 10800000
+    },
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.RINKEBY_ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      throwOnTransactionFailures: true,
+      loggingEnabled: true,
+      gasPrice: 10000000000
     }
   },
   namedAccounts: {
