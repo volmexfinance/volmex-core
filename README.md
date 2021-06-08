@@ -1,4 +1,4 @@
-# volmex.finance v1 [![ForTheBadge built-with-love](http://ForTheBadge.com/images/badges/built-with-love.svg)](https://GitHub.com/Naereen/)
+# volmex.finance v1
 
 This repository contains the core smart contracts for the volmex.finance v1 protocol. 
 
