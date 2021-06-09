@@ -14,5 +14,6 @@
         "./deploy",
         "./test",
         "./helper"
-    ]
+    ],
+    "files": ["./hardhat.config.ts"]
 }
