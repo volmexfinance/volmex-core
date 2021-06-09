@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity =0.8.2;
+pragma solidity =0.8.4;
 
 import "./IERC20Modified.sol";
 
@@ -27,10 +27,6 @@ interface IVolmexProtocol {
     function volatilityCapRatio() external view returns (uint256);
 
     function settlementPrice() external view returns (uint256);
-
-    function blockLock(address account) external view returns (uint256);
-
-    function approved(address account) external view returns (bool);
 
     // External functions
     function initialize(
@@ -66,10 +62,4 @@ interface IVolmexProtocol {
     function claimAccumulatedFees() external;
 
     function togglePause(bool _isPause) external;
-
-    function approveContractAccess(address _account) external;
-
-    function revokeContractAccess(address _account) external;
-
-    function transferOwnership(address newOwner) external;
 }

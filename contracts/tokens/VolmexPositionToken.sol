@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-pragma solidity =0.8.2;
+pragma solidity =0.8.4;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -15,7 +15,7 @@ contract VolmexPositionToken is
     ERC20PausableUpgradeable
 {
     // Position token role, calculated as keccak256("VOLMEX_PROTOCOL_ROLE")
-    bytes32 private constant VOLMEX_PROTOCOL_ROLE =
+    bytes32 public constant VOLMEX_PROTOCOL_ROLE =
         0x33ba6006595f7ad5c59211bde33456cab351f47602fc04f644c8690bc73c4e16;
 
     /**
