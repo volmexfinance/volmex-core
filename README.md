@@ -4,7 +4,7 @@ This repository contains the core smart contracts for the volmex.finance v1 prot
 
 # Bug bounty 
 
-This repository is subject to the volmex.finance v1 protocol bug bounty program, per the terms defined [here](https://github.com/volmexfinance/bug-bounty/blob/main/bug-bounty.md).
+This repository is subject to the volmex.finance v1 protocol bug bounty program, per the terms defined [here](https://github.com/volmexfinance/bug-bounty).
 
 # Licensing
 
