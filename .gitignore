@@ -64,7 +64,7 @@ types
 .history
 
 # openzeppelin's logs
-.openzeppelin
+.openzeppelin/unknown-*.json
 
 # hardhat-deploy
 deployments
