@@ -7,10 +7,11 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./interfaces/IERC20Modified.sol";
 import "./tokens/VolmexPositionToken.sol";
-import "./VolmexProtocol.sol";
+import "./protocol/VolmexProtocol.sol";
 
 /**
- * Factory is used to register respective index and clone position tokens
+ * @title Factory Contract
+ * @author volmex.finance [security@volmexlabs.com]
  */
 contract VolmexIndexFactory is OwnableUpgradeable {
     event IndexRegistered(

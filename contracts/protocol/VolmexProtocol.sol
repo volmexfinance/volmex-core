@@ -6,12 +6,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "./interfaces/IERC20Modified.sol";
-import "./library/VolmexSafeERC20.sol";
+import "../interfaces/IERC20Modified.sol";
+import "../library/VolmexSafeERC20.sol";
 
 /**
  * @title Protocol Contract
- * @author Volmex [security@volmexlabs.com]
+ * @author volmex.finance [security@volmexlabs.com]
  */
 contract VolmexProtocol is
     Initializable,
@@ -124,7 +124,7 @@ contract VolmexProtocol is
         IERC20Modified _inverseVolatilityToken,
         uint256 _minimumCollateralQty,
         uint256 _volatilityCapRatio
-    ) external initializer {
+    ) public initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
@@ -144,7 +144,7 @@ contract VolmexProtocol is
     /**
      * @notice Toggles the active variable. Restricted to only the owner of the contract.
      */
-    function toggleActive() external onlyOwner {
+    function toggleActive() external virtual onlyOwner {
         active = !active;
         emit ToggleActivated(active);
     }
@@ -155,6 +155,7 @@ contract VolmexProtocol is
      */
     function updateMinimumCollQty(uint256 _newMinimumCollQty)
         external
+        virtual
         onlyOwner
     {
         require(
@@ -173,7 +174,7 @@ contract VolmexProtocol is
     function updateVolatilityToken(
         address _positionToken,
         bool _isVolatilityIndexToken
-    ) external onlyOwner {
+    ) external virtual onlyOwner {
         _isVolatilityIndexToken
             ? volatilityToken = IERC20Modified(_positionToken)
             : inverseVolatilityToken = IERC20Modified(_positionToken);
@@ -192,6 +193,7 @@ contract VolmexProtocol is
      */
     function collateralize(uint256 _collateralQty)
         external
+        virtual
         onlyActive
         onlyNotSettled
     {
@@ -235,6 +237,7 @@ contract VolmexProtocol is
      */
     function redeem(uint256 _positionTokenQty)
         external
+        virtual
         onlyActive
         onlyNotSettled
     {
@@ -258,7 +261,7 @@ contract VolmexProtocol is
     function redeemSettled(
         uint256 _volatilityIndexTokenQty,
         uint256 _inverseVolatilityIndexTokenQty
-    ) external onlyActive onlySettled {
+    ) external virtual onlyActive onlySettled {
         uint256 collQtyToBeRedeemed =
             (_volatilityIndexTokenQty * settlementPrice) +
                 (_inverseVolatilityIndexTokenQty *
@@ -280,6 +283,7 @@ contract VolmexProtocol is
      */
     function settle(uint256 _settlementPrice)
         external
+        virtual
         onlyOwner
         onlyNotSettled
     {
@@ -299,7 +303,7 @@ contract VolmexProtocol is
         address _token,
         address _toWhom,
         uint256 _howMuch
-    ) external nonReentrant onlyOwner {
+    ) external virtual nonReentrant onlyOwner {
         require(
             _token != address(collateral),
             "Volmex: Collateral token not allowed"
@@ -315,6 +319,7 @@ contract VolmexProtocol is
      */
     function updateFees(uint256 _issuanceFees, uint256 _redeemFees)
         external
+        virtual
         onlyOwner
     {
         require(
@@ -331,7 +336,7 @@ contract VolmexProtocol is
     /**
      * @notice Safely transfer the accumulated fees to owner
      */
-    function claimAccumulatedFees() external onlyOwner {
+    function claimAccumulatedFees() external virtual onlyOwner {
         uint256 claimedAccumulatedFees = accumulatedFees;
         delete accumulatedFees;
 
@@ -345,7 +350,7 @@ contract VolmexProtocol is
      *
      * @param _isPause Boolean value to pause or unpause the position token { true = pause, false = unpause }
      */
-    function togglePause(bool _isPause) external onlyOwner {
+    function togglePause(bool _isPause) external virtual onlyOwner {
         if (_isPause) {
             volatilityToken.pause();
             inverseVolatilityToken.pause();
@@ -361,7 +366,7 @@ contract VolmexProtocol is
         uint256 _collateralQtyRedeemed,
         uint256 _volatilityIndexTokenQty,
         uint256 _inverseVolatilityIndexTokenQty
-    ) internal {
+    ) internal virtual {
         uint256 fee;
         if (redeemFees > 0) {
             fee = (_collateralQtyRedeemed * redeemFees) / 10000;
