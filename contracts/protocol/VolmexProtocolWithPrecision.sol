@@ -16,7 +16,7 @@ contract VolmexProtocolWithPrecision is VolmexProtocol {
 
     // This is the ratio of standard ERC20 tokens decimals by custom token decimals
     // Calculation for USDC: 10^18 / 10^6 = 10^12
-    // Where 10^18 represent precision of volatility token decimals and 10^6 represent USDT (collateral) decimals
+    // Where 10^18 represent precision of volatility token decimals and 10^6 represent USDC (collateral) decimals
     uint256 public precisionRatio;
 
     /**
