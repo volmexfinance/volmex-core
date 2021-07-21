@@ -84,6 +84,18 @@ export default {
       throwOnTransactionFailures: true,
       loggingEnabled: true,
       gasPrice: 10000000000
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${process.env.POLYGON_TESTNET_ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      throwOnTransactionFailures: true,
+      loggingEnabled: true,
+    },
+    polygon: {
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.POLYGON_MAINNET_ALCHEMY_API_KEY}`,
+      accounts: [`0x${process.env.PRIVATE_KEY}`],
+      throwOnTransactionFailures: true,
+      loggingEnabled: true,
     }
   },
   namedAccounts: {
