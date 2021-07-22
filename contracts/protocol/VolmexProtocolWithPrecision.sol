@@ -111,12 +111,14 @@ contract VolmexProtocolWithPrecision is VolmexProtocol {
             "Volmex: Collateral qty is less"
         );
 
-        uint256 effectiveCollateralQty =
-            _collateralQtyRedeemed / precisionRatio;
+        uint256 effectiveCollateralQty = _collateralQtyRedeemed /
+            precisionRatio;
 
         uint256 fee;
         if (redeemFees > 0) {
-            fee = (effectiveCollateralQty * redeemFees) / 10000;
+            fee =
+                (_collateralQtyRedeemed * redeemFees) /
+                (precisionRatio * 10000);
             effectiveCollateralQty = effectiveCollateralQty - fee;
             accumulatedFees = accumulatedFees + fee;
         }
