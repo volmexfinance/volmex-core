@@ -96,6 +96,10 @@ export default {
       accounts: [`0x${process.env.PRIVATE_KEY}`],
       throwOnTransactionFailures: true,
       loggingEnabled: true,
+      gas: 500000,
+      gasPrice: 30000000000, // 30 gwei, ref: https://polygongasstation.com/
+      blockGasLimit: 8000000,
+      timeout: 3600000
     }
   },
   namedAccounts: {
