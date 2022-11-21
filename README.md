@@ -1,6 +1,6 @@
-# volmex.finance v1
+# Volatility tokens
 
-This repository contains the core smart contracts for the volmex.finance v1 protocol. 
+This repository contains the core smart contracts for the volmex.finance v1 protocol (volatility tokens). 
 
 # Bug bounty 
 
